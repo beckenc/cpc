@@ -18,7 +18,8 @@ namespace utils
 class thread_runner
 {
    public:
-    using runable_t = std::function<void()>;
+    using runable_t  = std::function<void()>;
+    using runabort_t = std::function<void()>;
 
     thread_runner() = delete;
 
@@ -30,7 +31,7 @@ class thread_runner
 
     ~thread_runner();
 
-    thread_runner(std::string name, runable_t fn);
+    thread_runner(std::string name, runable_t run, runabort_t abort);
 
     auto run() -> bool;
     auto shutdown() -> void;
@@ -42,5 +43,6 @@ class thread_runner
     std::atomic_bool running;
     std::string      name;
     runable_t        runable;
+    runabort_t       runabort;
 };
 }  // namespace utils

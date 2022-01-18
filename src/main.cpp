@@ -14,6 +14,9 @@
 #include <queue>
 #include <string>
 
+#include "consumer/runnable.hpp"
+#include "io/io.hpp"
+#include "producer/runnable.hpp"
 #include "utils/thread_runner.hpp"
 
 namespace po = boost::program_options;
@@ -90,6 +93,23 @@ auto main(int argc, char* argv[]) -> int
         // Construct and start a deadline timer waiting for program timeout
         auto dt = boost::asio::deadline_timer{ioc, boost::posix_time::seconds{vm["runtime"].as<int>()}};
         dt.async_wait([&ioc](const boost::system::error_code&) { std::raise(SIGTERM); });
+
+        // start producing / consuming
+        auto cp_queue = cpc::message_queue{};
+
+        auto consumer_runnable = consumer::runnable{cp_queue, io::send_data};
+        auto consumer          = utils::thread_runner{"consumer", 
+            [&consumer_runnable]() { consumer_runnable(); },
+            [&consumer_runnable]() { consumer_runnable.abort(); }};
+
+        auto producer_runnable =
+            producer::runnable{ioc, cp_queue, io::get_data, producer::runnable::tick_t{1000 / vm["throughput"].as<int>()}};
+        auto producer = utils::thread_runner{"producer", 
+            [&producer_runnable]() { producer_runnable(); },
+            [&producer_runnable]() { producer_runnable.abort(); }};
+
+        producer.run();
+        consumer.run();
 
         // start async event processing
         ioc.run();

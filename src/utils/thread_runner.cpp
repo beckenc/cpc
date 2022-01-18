@@ -13,13 +13,14 @@ namespace utils
 
 thread_runner::~thread_runner() { shutdown(); }
 
-thread_runner::thread_runner(std::string name, runable_t fn) : name{std::move(name)}, runable{fn} {}
+thread_runner::thread_runner(std::string name, runable_t run, runabort_t abort) : name{std::move(name)}, runable{run}, runabort(abort) {}
 
 void thread_runner::shutdown()
 {
     running.store(false);
     if (thread.joinable())
     {
+        runabort();
         std::cout << "[" << name << "] Shutdown\n";
         thread.join();
     }

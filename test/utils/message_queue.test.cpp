@@ -7,9 +7,7 @@
 #include "utils/message_queue.hpp"
 
 #include <boost/test/unit_test.hpp>
-
-#include "io.hpp"
-
+#include <span>
 namespace utils
 {
 
@@ -17,36 +15,37 @@ BOOST_AUTO_TEST_SUITE(suite_message_queue)
 
 struct Fixture
 {
-    using msg_type = std::vector<char>;
+    using msg_type = std::array<char, 1>;
+    auto make_msg(char c) { return std::make_unique<msg_type>(msg_type{c}); }
 };
 
 BOOST_FIXTURE_TEST_CASE(test_enqueue, Fixture)
 {
     auto q = utils::message_queue<msg_type, 3>{};
-    BOOST_TEST(q.enqueue({'1'}));
-    BOOST_TEST(q.enqueue({'2'}));
-    BOOST_TEST(q.enqueue({'3'}));
-    BOOST_TEST(!q.enqueue({'4'}));
+    BOOST_TEST(q.enqueue(make_msg('1')));
+    BOOST_TEST(q.enqueue(make_msg('2')));
+    BOOST_TEST(q.enqueue(make_msg('3')));
+    BOOST_TEST(!q.enqueue(make_msg('4')));
 }
 
 BOOST_FIXTURE_TEST_CASE(test_dequeue, Fixture)
 {
     auto q = utils::message_queue<msg_type, 3>{};
-    BOOST_TEST_REQUIRE(q.enqueue({'5'}));
-    BOOST_TEST_REQUIRE(q.enqueue({'6'}));
-    BOOST_TEST_REQUIRE(q.enqueue({'7'}));
-    BOOST_TEST_REQUIRE(!q.enqueue({'8'}));
+    BOOST_TEST_REQUIRE(q.enqueue(make_msg('5')));
+    BOOST_TEST_REQUIRE(q.enqueue(make_msg('6')));
+    BOOST_TEST_REQUIRE(q.enqueue(make_msg('7')));
+    BOOST_TEST_REQUIRE(!q.enqueue(make_msg('8')));
 
     {
         auto msg = q.dequeue();
-        BOOST_CHECK_EQUAL(msg[0], '5');
-        BOOST_TEST_REQUIRE(q.enqueue({'8'}));
-        BOOST_TEST_REQUIRE(!q.enqueue({'9'}));
+        BOOST_CHECK_EQUAL((*msg)[0], '5');
+        BOOST_TEST_REQUIRE(q.enqueue(make_msg('8')));
+        BOOST_TEST_REQUIRE(!q.enqueue(make_msg('9')));
     }
     for (auto c : {'6', '7', '8'})
     {
         auto msg = q.dequeue();
-        BOOST_CHECK_EQUAL(msg[0], c);
+        BOOST_CHECK_EQUAL((*msg)[0], c);
     }
 }
 
@@ -72,19 +71,19 @@ BOOST_FIXTURE_TEST_CASE(test_watermark, Fixture)
                                                     high_mark_reached = true;
                                                 }}};
 
-    BOOST_TEST(q.enqueue({'1'}));
+    BOOST_TEST(q.enqueue(make_msg('1')));
     BOOST_CHECK_EQUAL(low_mark_reached, false);
     BOOST_CHECK_EQUAL(high_mark_reached, false);
 
-    BOOST_TEST(q.enqueue({'2'}));
+    BOOST_TEST(q.enqueue(make_msg('2')));
     BOOST_CHECK_EQUAL(low_mark_reached, false);
     BOOST_CHECK_EQUAL(high_mark_reached, false);
 
-    BOOST_TEST(q.enqueue({'3'}));
+    BOOST_TEST(q.enqueue(make_msg('3')));
     BOOST_CHECK_EQUAL(low_mark_reached, false);
     BOOST_CHECK_EQUAL(high_mark_reached, true);
 
-    BOOST_TEST(!q.enqueue({'4'}));
+    BOOST_TEST(!q.enqueue(make_msg('4')));
     BOOST_CHECK_EQUAL(low_mark_reached, false);
     BOOST_CHECK_EQUAL(high_mark_reached, true);
 
@@ -92,7 +91,7 @@ BOOST_FIXTURE_TEST_CASE(test_watermark, Fixture)
     BOOST_CHECK_EQUAL(low_mark_reached, false);
     BOOST_CHECK_EQUAL(high_mark_reached, true);
 
-    BOOST_TEST(q.enqueue({'4'}));
+    BOOST_TEST(q.enqueue(make_msg('4')));
     BOOST_CHECK_EQUAL(low_mark_reached, true);
     BOOST_CHECK_EQUAL(high_mark_reached, true);
 }
