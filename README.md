@@ -90,9 +90,9 @@ The program consists of the following components:
 
 ## TODO
 - Eliminate map lookup and `std::string` operations in the sending path to save some cpu cycles
-- Think about a throttle mechanism of the producer in case of overload situation of the consumer
-- Revise the system start and do not do everything in the main routine. Some kind of module setup / initialization
-- Unit tests for Message Dispatching
+- Think about a throttle mechanism for the producer in case of overload situations of the consumer
+- Rework the system start and do not do everything in the main routine. Some kind of module setup / initialization
+- Unit tests for message dispatching
 - Fix linter warnings
 
 ## License
