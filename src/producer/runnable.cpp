@@ -10,13 +10,11 @@
 
 #include "io/io.hpp"
 
-
-
 namespace producer
 {
 
 runnable::runnable(io_context& ioc, mq_t& q, get_data_t gd, tick_t t)  //
-    : queue{q}, get_data{gd}, expiry_time{t}, timer{ioc, t}
+    : queue{q}, get_data{std::move(gd)}, expiry_time{t}, timer{ioc, t}
 {
     timer.async_wait([this](const auto& ec) { tick(ec); });
 }

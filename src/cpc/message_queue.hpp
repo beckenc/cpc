@@ -23,6 +23,7 @@ struct raw_frame : public std::array<char, frame_size>
     raw_frame& operator=(const raw_frame& rhs) = delete;
     raw_frame(raw_frame&& rhs) noexcept        = delete;
     raw_frame& operator=(raw_frame&& rhs) noexcept = delete;
+    ~raw_frame()                                   = default;
 };
 
 struct video_frame : public raw_frame

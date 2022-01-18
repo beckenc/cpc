@@ -28,7 +28,7 @@ void get_data(std::span<char, frame_size> const& output)
     // std::cout << "[io] get_data " << output[0] << "\n";
 }
 
-void send_data(std::span<const char, frame_size> const& output)
+void send_data(std::span<const char, frame_size> const&)
 {
     send_cnt++;
     // std::cout << "[io] send_data(" << output.data() << ")\n";

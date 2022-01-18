@@ -9,7 +9,7 @@
 namespace consumer
 {
 runnable::runnable(mq_t& q, send_data_t sd, dispatcher_t dp)  //
-    : queue{q}, send_data{sd}, dispatcher{dp}
+    : queue{q}, send_data{std::move(sd)}, dispatcher{std::move(dp)}
 {
 }
 
