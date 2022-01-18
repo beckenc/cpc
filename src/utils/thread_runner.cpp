@@ -11,9 +11,15 @@
 namespace utils
 {
 
-thread_runner::~thread_runner() { shutdown(); }
+thread_runner::thread_runner(std::string name, runable_t run, runabort_t abort)  //
+    : name{std::move(name)}, runable{run}, runabort(abort)
+{
+}
 
-thread_runner::thread_runner(std::string name, runable_t run, runabort_t abort) : name{std::move(name)}, runable{run}, runabort(abort) {}
+thread_runner::~thread_runner()  //
+{
+    shutdown();
+}
 
 void thread_runner::shutdown()
 {
@@ -52,13 +58,13 @@ void thread_runner::run_fn()
         {
             runable();
         }
-        catch (std::runtime_error& e)
+        catch (const std::runtime_error& e)
         {
             std::cerr << "[" << name << "] " << e.what() << "\n";
         }
-        catch (...)
+        catch (const std::exception& e)
         {
-            std::cerr << "[" << name << "] Something unforseen happened.\n";
+            std::cerr << "[" << name << "] Something unforseen happened (" << e.what() << ")\n";
         }
     }
 }

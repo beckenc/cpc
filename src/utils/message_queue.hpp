@@ -23,16 +23,8 @@ class message_queue
 {
    public:
     using msg     = T;
-    using msg_ptr = std::shared_ptr<msg>;  // use a shared pointer for a zero-copy dequeu mechanism
+    using msg_ptr = std::shared_ptr<msg>;  // use a shared pointer for a zero-copy dequeue mechanism
     using fifo_t  = std::queue<msg_ptr, std::list<msg_ptr>>;
-
-    struct watermark
-    {
-        using boundary = std::pair<int, std::function<void()>>;
-        bool     raised{false};
-        boundary low{0, nullptr};
-        boundary high{depth, nullptr};
-    };
 
     message_queue() = default;
 
@@ -43,10 +35,6 @@ class message_queue
     message_queue& operator=(message_queue&& rhs) noexcept = delete;
 
     ~message_queue() = default;
-
-    /** message queue construction with watermark observation
-     */
-    message_queue(watermark::boundary low, watermark::boundary high);
 
     /** enqueue the payload and signal the consumer
      * @return false if there is no space left in the queue
@@ -67,23 +55,7 @@ class message_queue
     std::counting_semaphore<depth> available_slots{depth};
     std::mutex                     operation;
     fifo_t                         fifo;
-    watermark                      wm;
 };
-
-template <typename T, size_t depth>
-inline message_queue<T, depth>::message_queue(watermark::boundary low, watermark::boundary high) : wm{false, low, high}
-{
-    const auto& [low_mark, low_hook]   = low;
-    const auto& [high_mark, high_hook] = high;
-    if (low_mark >= high_mark)
-    {
-        throw std::invalid_argument("low watermark is greater or equal than high mark");
-    }
-    if (high_mark > depth)
-    {
-        throw std::invalid_argument("high watermark couldn't be greater than q's depth");
-    }
-}
 
 template <typename T, size_t depth>
 inline auto message_queue<T, depth>::enqueue(msg_ptr&& payload) -> bool
@@ -92,23 +64,14 @@ inline auto message_queue<T, depth>::enqueue(msg_ptr&& payload) -> bool
     {
         return false;
     }
+
+    size_t fill_level;
     {
         auto guard = std::lock_guard<std::mutex>{operation};
         fifo.emplace(std::forward<msg_ptr>(payload));
-
-        // Check if high watermark is observerd and reached.
-        // Invoke the notification hook for the high mark and start observing the lower mark.
-        if (const auto& [mark, hook] = wm.high; hook && fifo.size() >= mark)
-        {
-            wm.raised = true;
-            hook();
-        }
-        else if (const auto& [mark, hook] = wm.low; hook && wm.raised && fifo.size() - 1 <= mark)
-        {
-            wm.raised = false;
-            hook();
-        }
+        fill_level = fifo.size();
     }
+
     occupied_slots.release();
     return true;
 }
@@ -117,16 +80,18 @@ template <typename T, size_t depth>
 inline auto message_queue<T, depth>::dequeue() -> msg_ptr
 {
     occupied_slots.acquire();  // blocking, till message arrives
-    
+
     auto msg = fifo.front();
     if (!msg)
     {  // noting in the queue, must be the stop sequence
         return msg;
     }
-    else
+
+    size_t fill_level;
     {
         auto g = std::lock_guard<std::mutex>{operation};
         fifo.pop();
+        fill_level = fifo.size();
     }
 
     available_slots.release();

@@ -12,15 +12,8 @@
 namespace io
 {
 
-enum class typeof_io
-{
-    video,
-    audio,
-    hw,
-    network
-};
-
 constexpr size_t frame_size = 16 * 1024 * 1024;
 void             get_data(std::span<char, frame_size> const& output);
 void             send_data(std::span<const char, frame_size> const& output);
+void             print_statistics();
 }  // namespace io

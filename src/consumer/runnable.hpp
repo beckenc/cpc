@@ -15,16 +15,29 @@ namespace consumer
 class runnable
 {
    public:
-    using mq_t        = cpc::message_queue;
-    using send_data_t = std::function<void(std::span<const char, cpc::frame_size> const& output)>;
+    using mq_t         = cpc::message_queue;
+    using send_data_t  = std::function<void(std::span<const char, cpc::frame_size> const& output)>;
+    using dispatcher_t = std::function<void(cpc::frame& output)>;
 
-    runnable(mq_t& q, send_data_t sd);
+    /** construct a consumer runnable
+     * @param q     message queue, the runners synchronization point
+     * @param sd    i/o interface for sending post processed data back to the hardware
+     * @param dp    message dispatcher hook
+     */
+    runnable(mq_t& q, send_data_t sd, dispatcher_t dp);
 
+    /** Wait for message arrival on the queue. 
+     * 
+     * Forward received message to the domain specifc 
+     * dispatcher and than send it back to the
+     * hardware
+     */
     auto operator()() -> void;
     auto abort() -> void;
 
    private:
-    mq_t&       queue;
-    send_data_t send_data;
+    mq_t&        queue;
+    send_data_t  send_data;
+    dispatcher_t dispatcher;
 };
 }  // namespace consumer

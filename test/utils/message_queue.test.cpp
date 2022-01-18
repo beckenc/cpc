@@ -49,53 +49,6 @@ BOOST_FIXTURE_TEST_CASE(test_dequeue, Fixture)
     }
 }
 
-BOOST_FIXTURE_TEST_CASE(test_watermark, Fixture)
-{
-    BOOST_CHECK_NO_THROW((utils::message_queue<msg_type, 3>{{0, []() {}}, {1, []() {}}}));
-    BOOST_CHECK_NO_THROW((utils::message_queue<msg_type, 3>{{2, []() {}}, {3, []() {}}}));
-
-    BOOST_CHECK_THROW((utils::message_queue<msg_type, 3>{{0, []() {}}, {4, []() {}}}), std::invalid_argument);
-    BOOST_CHECK_THROW((utils::message_queue<msg_type, 3>{{1, []() {}}, {0, []() {}}}), std::invalid_argument);
-
-    auto low_mark_reached  = false;
-    auto high_mark_reached = false;
-    auto q                 = utils::message_queue<msg_type, 3>{{0,
-                                                [&low_mark_reached]()
-                                                {
-                                                    BOOST_TEST_MESSAGE("low watermark reached");
-                                                    low_mark_reached = true;
-                                                }},
-                                               {3, [&high_mark_reached]()
-                                                {
-                                                    BOOST_TEST_MESSAGE("high watermark reached");
-                                                    high_mark_reached = true;
-                                                }}};
-
-    BOOST_TEST(q.enqueue(make_msg('1')));
-    BOOST_CHECK_EQUAL(low_mark_reached, false);
-    BOOST_CHECK_EQUAL(high_mark_reached, false);
-
-    BOOST_TEST(q.enqueue(make_msg('2')));
-    BOOST_CHECK_EQUAL(low_mark_reached, false);
-    BOOST_CHECK_EQUAL(high_mark_reached, false);
-
-    BOOST_TEST(q.enqueue(make_msg('3')));
-    BOOST_CHECK_EQUAL(low_mark_reached, false);
-    BOOST_CHECK_EQUAL(high_mark_reached, true);
-
-    BOOST_TEST(!q.enqueue(make_msg('4')));
-    BOOST_CHECK_EQUAL(low_mark_reached, false);
-    BOOST_CHECK_EQUAL(high_mark_reached, true);
-
-    for (auto c : {'1', '2', '3'}) q.dequeue();
-    BOOST_CHECK_EQUAL(low_mark_reached, false);
-    BOOST_CHECK_EQUAL(high_mark_reached, true);
-
-    BOOST_TEST(q.enqueue(make_msg('4')));
-    BOOST_CHECK_EQUAL(low_mark_reached, true);
-    BOOST_CHECK_EQUAL(high_mark_reached, true);
-}
-
 BOOST_AUTO_TEST_SUITE_END()
 
 }  // namespace utils

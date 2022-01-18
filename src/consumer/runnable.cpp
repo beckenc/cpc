@@ -8,17 +8,25 @@
 
 namespace consumer
 {
-runnable::runnable(mq_t& q, send_data_t sd) : queue{q}, send_data{sd} {}
+runnable::runnable(mq_t& q, send_data_t sd, dispatcher_t dp)  //
+    : queue{q}, send_data{sd}, dispatcher{dp}
+{
+}
 
 auto runnable::operator()() -> void
 {
     if (auto msg = queue.dequeue(); msg)
     {
-        // to something cracy
-        send_data(*msg);
+        // dispatch the message
+        // apply some sort of data transformation / aggregation or filtering prior to passing the data on
+        dispatcher(*msg);
+        std::visit([this](auto& raw_msg) { send_data(raw_msg); }, *msg);
     }
 }
 
-auto runnable::abort() -> void { queue.abort_queue(); }
+auto runnable::abort() -> void  //
+{
+    queue.abort_queue();
+}
 
 }  // namespace consumer

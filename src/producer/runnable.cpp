@@ -10,17 +10,20 @@
 
 #include "io/io.hpp"
 
+
+
 namespace producer
 {
 
-runnable::runnable(io_context& ioc, mq_t& q, get_data_t gd, tick_t t) : queue{q}, get_data{gd}, expiry_time{t}, timer{ioc, t}
+runnable::runnable(io_context& ioc, mq_t& q, get_data_t gd, tick_t t)  //
+    : queue{q}, get_data{gd}, expiry_time{t}, timer{ioc, t}
 {
     timer.async_wait([this](const auto& ec) { tick(ec); });
 }
 
 auto runnable::operator()() -> void
 {
-    static char i = 0;
+    using namespace std::chrono_literals;
 
     // wait for a signal from the tick by attempting to decrement the semaphore
     tick_sync.acquire();
@@ -32,11 +35,13 @@ auto runnable::operator()() -> void
 
     if (!queue.enqueue(std::move(frame_ptr)))
     {
-        throw std::runtime_error("failed to enqueue");
+        // TODO
+        // Think about a throttle mechanism to not overload the consumer
+        throw std::runtime_error("Overload! failed to enqueue");
     }
 }
 
-auto runnable::abort() -> void
+auto runnable::abort() -> void  //
 {
     tick_sync.release();
 }
