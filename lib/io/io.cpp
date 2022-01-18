@@ -36,7 +36,9 @@ void send_data(std::span<const char, frame_size> const&)
 
 void print_statistics()
 {
+    auto lost = 100 - ((100 * send_cnt) / get_cnt);
     std::cout << "[io] Statistics:\n"
-              << "\tget_data: " << get_cnt << "\n\tsend_data: " << send_cnt << "\n";
+              << "\tget_data: " << get_cnt << "\n\tsend_data: " << send_cnt << "\n"
+              << "\tlost: " << lost << "%\n";
 }
 }  // namespace io
