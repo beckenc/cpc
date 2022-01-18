@@ -8,7 +8,6 @@
 
 #include <cstddef>
 #include <functional>
-#include <list>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -24,7 +23,7 @@ class message_queue
    public:
     using msg     = T;
     using msg_ptr = std::shared_ptr<msg>;  // use a shared pointer for a zero-copy dequeue mechanism
-    using fifo_t  = std::queue<msg_ptr, std::list<msg_ptr>>;
+    using fifo_t  = std::queue<msg_ptr>;
 
     message_queue() = default;
 
