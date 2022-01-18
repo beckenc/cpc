@@ -8,7 +8,7 @@ The program consists of the following components:
 
 * **consumer** dequeue the message and forward it to the domain specific dispatcher for post processing and then pass it to the I/O system to finish.
 
-* **message_queue** zero copy inter-thread communication component based on `std::list` and `std::counting_semaphore`. API with a blocking dequeue and a non-blocking enqueue method.
+* **message_queue** zero copy inter-thread communication component based on `std::queue` and `std::counting_semaphore`. API with a blocking dequeue and a non-blocking enqueue method.
 
         using msg_ptr = std::shared_ptr<msg>;  // use a shared pointer for a zero-copy dequeue mechanism
         [[nodiscard]] auto enqueue(msg_ptr&& payload) -> bool;
