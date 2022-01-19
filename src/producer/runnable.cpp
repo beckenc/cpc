@@ -23,12 +23,13 @@ auto runnable::operator()() -> void
 {
     using namespace std::chrono_literals;
 
-    // wait for a signal from the tick by attempting to decrement the semaphore
-    tick_sync.acquire();
-
     // copy io data into the transport frame
     // and move it to the queue
     auto frame_ptr = std::make_unique<cpc::frame>();
+
+    // wait for a signal from the tick by attempting to decrement the semaphore
+    tick_sync.acquire();
+
     get_data(*frame_ptr);
 
     if (!queue.enqueue(std::move(frame_ptr)))

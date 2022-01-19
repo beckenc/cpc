@@ -19,7 +19,7 @@ using namespace std::literals;
 template <typename T = cpc::frame>
 struct message_dispatcher
 {
-    auto operator()(auto&) -> std::span<const char, frame_size>  //
+    auto operator()(auto&) -> void  //
     {
         throw std::runtime_error("unknown message arrived");
     }
@@ -59,7 +59,7 @@ struct message_dispatcher<audio_frame>
     {
         constexpr auto s = "audio_frame\0"sv;
         s.copy(frame.data(), s.size());
-        std::this_thread::sleep_for(20ms); // simulate some load        
+        std::this_thread::sleep_for(20ms); // simulate some load
     }
 };
 
@@ -82,7 +82,7 @@ struct message_dispatcher<network_frame>
     {
         constexpr auto s = "network_frame\0"sv;
         s.copy(frame.data(), s.size());
-        std::this_thread::sleep_for(30ms);  // simulate some load        
+        std::this_thread::sleep_for(30ms);  // simulate some load
     }
 };
 
