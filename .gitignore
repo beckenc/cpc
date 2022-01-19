@@ -2,3 +2,6 @@ doc/Challenge.md
 build
 .vscode
 .cache
+tag.files
+tags
+cscope.out
