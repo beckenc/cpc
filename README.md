@@ -1,4 +1,4 @@
-# cpc - Consumer Provider Challenge
+# cpc - Consumer Producer Challenge
 
 A simple producer consumer scenario in C++.
 
