@@ -7,12 +7,13 @@
 #include "utils/thread_runner.hpp"
 
 #include <iostream>
+#include <utility>
 
 namespace utils
 {
 
 thread_runner::thread_runner(std::string name, runable_t run, runabort_t abort)  //
-    : name{std::move(name)}, runable{run}, runabort(abort)
+    : name{std::move(name)}, runable{std::move(run)}, runabort(std::move(abort))
 {
 }
 
@@ -32,13 +33,13 @@ void thread_runner::shutdown()
     }
 }
 
-bool thread_runner::run()
+auto thread_runner::run() -> bool
 {
     std::cout << "[" << name << "] Starting up\n";
     try
     {
         running.store(true);
-        thread = std::thread(&thread_runner::run_fn, this);
+        thread = std::thread{&thread_runner::run_fn, this};
     }
     catch (...)
     {

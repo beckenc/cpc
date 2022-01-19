@@ -24,10 +24,10 @@ class thread_runner
     thread_runner() = delete;
 
     thread_runner(const thread_runner& other) = delete;
-    thread_runner& operator=(const thread_runner& rhs) = delete;
+    auto operator=(const thread_runner& rhs) -> thread_runner& = delete;
 
     thread_runner(thread_runner&& rhs) noexcept = delete;
-    thread_runner& operator=(thread_runner&& rhs) noexcept = delete;
+    auto operator=(thread_runner&& rhs) noexcept -> thread_runner& = delete;
 
     ~thread_runner();
 

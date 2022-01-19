@@ -20,10 +20,10 @@ struct raw_frame : public std::array<char, frame_size>
 {
     raw_frame()                       = default;
     raw_frame(const raw_frame& other) = delete;
-    raw_frame& operator=(const raw_frame& rhs) = delete;
-    raw_frame(raw_frame&& rhs) noexcept        = delete;
-    raw_frame& operator=(raw_frame&& rhs) noexcept = delete;
-    ~raw_frame()                                   = default;
+    auto operator=(const raw_frame& rhs) -> raw_frame& = delete;
+    raw_frame(raw_frame&& rhs) noexcept                = delete;
+    auto operator=(raw_frame&& rhs) noexcept -> raw_frame& = delete;
+    ~raw_frame()                                           = default;
 };
 
 struct video_frame : public raw_frame

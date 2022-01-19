@@ -28,10 +28,10 @@ class message_queue
     message_queue() = default;
 
     message_queue(const message_queue& other) = delete;
-    message_queue& operator=(const message_queue& rhs) = delete;
+    auto operator=(const message_queue& rhs) -> message_queue& = delete;
 
     message_queue(message_queue&& rhs) noexcept = delete;
-    message_queue& operator=(message_queue&& rhs) noexcept = delete;
+    auto operator=(message_queue&& rhs) noexcept -> message_queue& = delete;
 
     ~message_queue() = default;
 
@@ -64,11 +64,9 @@ inline auto message_queue<T, depth>::enqueue(msg_ptr&& payload) -> bool
         return false;
     }
 
-    size_t fill_level;
     {
         auto guard = std::lock_guard<std::mutex>{operation};
         fifo.emplace(std::forward<msg_ptr>(payload));
-        fill_level = fifo.size();
     }
 
     occupied_slots.release();
@@ -86,11 +84,9 @@ inline auto message_queue<T, depth>::dequeue() -> msg_ptr
         return msg;
     }
 
-    size_t fill_level;
     {
         auto g = std::lock_guard<std::mutex>{operation};
         fifo.pop();
-        fill_level = fifo.size();
     }
 
     available_slots.release();
