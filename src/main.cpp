@@ -113,7 +113,7 @@ auto main(int argc, char* argv[]) -> int
         //    start producing / consuming domain specific
         //
         auto cp_queue          = cpc::message_queue{};
-        auto consumer_runnable = consumer::runnable{cp_queue, io::send_data, [](cpc::frame& frame) { cpc::message_dispatcher{}(frame); }};
+        auto consumer_runnable = consumer::runnable{cp_queue, io::send_data, cpc::message_dispatcher{} };
         auto consumer          = utils::thread_runner{"consumer",                                       //
                                              [&consumer_runnable]() { consumer_runnable(); },  //
                                              [&consumer_runnable]() { consumer_runnable.abort(); }};
