@@ -19,8 +19,7 @@ auto runnable::operator()() -> void
     {
         // dispatch the message
         // apply some sort of data transformation / aggregation or filtering prior to passing the data on
-        dispatcher(*msg);
-        std::visit([this](auto& raw_msg) { send_data(raw_msg); }, *msg);
+        send_data(dispatcher(*msg));
     }
 }
 

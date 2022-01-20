@@ -100,7 +100,6 @@ Another aproach would be the use of `POSIX message queues` what comes with the l
     Signal set registered for process termination (Ctrl+C)
 
 ## TODO
-- Eliminate map lookup and `std::string` operations in the sending path to save some cpu cycles
 - Think about a throttle mechanism for the producer in case of overload situations of the consumer
 - Rework the system start and do not do everything in the main routine. Some kind of module setup / initialization
 - Unit tests for message dispatching

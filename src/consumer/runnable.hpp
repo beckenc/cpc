@@ -17,7 +17,7 @@ class runnable
    public:
     using mq_t         = cpc::message_queue;
     using send_data_t  = std::function<void(std::span<const char, cpc::frame_size> const& output)>;
-    using dispatcher_t = std::function<void(cpc::frame& output)>;
+    using dispatcher_t = std::function<std::span<const char, cpc::frame_size>(cpc::frame& output)>;
 
     /** construct a consumer runnable
      * @param q     message queue, the runners synchronization point

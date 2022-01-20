@@ -19,7 +19,7 @@ using namespace std::literals;
 template <typename T = cpc::frame>
 struct message_dispatcher
 {
-    auto operator()(auto&) -> void  //
+    auto operator()(auto&)  //
     {
         throw std::runtime_error("unknown message arrived");
     }
@@ -28,14 +28,15 @@ struct message_dispatcher
 template <>
 struct message_dispatcher<cpc::frame>
 {
-    auto operator()(auto& frame) -> void
+    auto operator()(auto& frame)
     {
         // dispatch the concrete type. video, audio, hw or network
-        std::visit(
+        return std::visit(
             [](auto& arg)
             {
                 using T = std::decay_t<decltype(arg)>;
                 message_dispatcher<T>{}(arg);
+                return std::span<char, cpc::frame_size>{arg};
             },
             frame);
     }
@@ -44,7 +45,7 @@ struct message_dispatcher<cpc::frame>
 template <>
 struct message_dispatcher<video_frame>
 {
-    auto operator()(auto& frame) -> void  //
+    auto operator()(auto& frame)  //
     {
         constexpr auto s = "video_frame\0"sv;
         s.copy(frame.data(), s.size());
@@ -55,7 +56,7 @@ struct message_dispatcher<video_frame>
 template <>
 struct message_dispatcher<audio_frame>
 {
-    auto operator()(auto& frame) -> void  //
+    auto operator()(auto& frame)  //
     {
         constexpr auto s = "audio_frame\0"sv;
         s.copy(frame.data(), s.size());
@@ -67,7 +68,7 @@ template <>
 struct message_dispatcher<hw_frame>
 {
    public:
-    auto operator()(auto& frame) -> void  //
+    auto operator()(auto& frame)  //
     {
         constexpr auto s = "hw_frame\0"sv;
         s.copy(frame.data(), s.size());
@@ -78,7 +79,7 @@ template <>
 struct message_dispatcher<network_frame>
 {
    public:
-    auto operator()(auto& frame) -> void  //
+    auto operator()(auto& frame)  //
     {
         constexpr auto s = "network_frame\0"sv;
         s.copy(frame.data(), s.size());

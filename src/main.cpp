@@ -23,6 +23,7 @@
 #include "utils/thread_runner.hpp"
 
 namespace po = boost::program_options;
+using namespace std::literals;
 
 static constexpr int min_runtime    = 10;
 static constexpr int min_throughput = 10;
@@ -35,7 +36,7 @@ static void check_args(const po::variables_map& vm)
 {
     if (vm.count("domain"))
     {
-        if (auto d = vm["domain"].as<std::string>(); d != "video" && d != "audio" && d != "hw" && d != "network")  //
+        if (auto d = vm["domain"].as<std::string>(); d != "video"sv && d != "audio"sv && d != "hw"sv && d != "network"sv)  //
             throw std::out_of_range("--domain argument is invalid");
         std::cout << "[args] Data processing domain was set to " << vm["domain"].as<std::string>() << "\n";
     }
@@ -112,32 +113,24 @@ auto main(int argc, char* argv[]) -> int
         // 4) Consumer / Producer
         //    start producing / consuming domain specific
         //
-        auto cp_queue          = cpc::message_queue{};
-        auto consumer_runnable = consumer::runnable{cp_queue, io::send_data, cpc::message_dispatcher{} };
+        auto cp_queue = cpc::message_queue{};
+
+        auto consumer_runnable = consumer::runnable{cp_queue, io::send_data, cpc::message_dispatcher{}};
         auto consumer          = utils::thread_runner{"consumer",                                       //
                                              [&consumer_runnable]() { consumer_runnable(); },  //
                                              [&consumer_runnable]() { consumer_runnable.abort(); }};
 
-        auto producer_runnable = producer::runnable{ioc, cp_queue,
-                                                    [&vm](cpc::frame& frame)
-                                                    {
-                                                        // TODO
-                                                        // Avoid map lookup and std::string operations in the
-                                                        // sending path to save some cpu cycles
-                                                        if (vm["domain"].as<std::string>() == "video")
-                                                            frame.emplace<cpc::video_frame>();
-                                                        else if (vm["domain"].as<std::string>() == "audio")
-                                                            frame.emplace<cpc::audio_frame>();
-                                                        else if (vm["domain"].as<std::string>() == "hw")
-                                                            frame.emplace<cpc::hw_frame>();
-                                                        else if (vm["domain"].as<std::string>() == "network")
-                                                            frame.emplace<cpc::network_frame>();
-                                                        std::visit([](auto& raw_msg) { io::get_data(raw_msg); }, frame);
-                                                    },
-                                                    producer::runnable::tick_t{1000 / vm["throughput"].as<int>()}};
+        auto domain   = vm["domain"].as<std::string>();
+        auto get_data = (domain == "video"sv)   ? [](cpc::frame& frame) { io::get_data(frame.emplace<cpc::video_frame>()); }
+                        : (domain == "audio"sv) ? [](cpc::frame& frame) { io::get_data(frame.emplace<cpc::audio_frame>()); }
+                        : (domain == "hw"sv)    ? [](cpc::frame& frame) { io::get_data(frame.emplace<cpc::hw_frame>()); }
+                                                : [](cpc::frame& frame) { io::get_data(frame.emplace<cpc::network_frame>()); };
+
+        auto producer_runnable = producer::runnable{ioc, cp_queue, get_data, producer::runnable::tick_t{1000 / vm["throughput"].as<int>()}};
         auto producer          = utils::thread_runner{"producer",                                       //
                                              [&producer_runnable]() { producer_runnable(); },  //
                                              [&producer_runnable]() { producer_runnable.abort(); }};
+
         //
         // 5) start async event processing
         //
