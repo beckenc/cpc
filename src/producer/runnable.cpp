@@ -25,7 +25,7 @@ auto runnable::operator()() -> void
 
     // copy io data into the transport frame
     // and move it to the queue
-    auto frame_ptr = std::make_unique<cpc::frame>();
+    auto frame_ptr = std::make_shared<cpc::frame>();
 
     // wait for a signal from the tick by attempting to decrement the semaphore
     tick_sync.acquire();
