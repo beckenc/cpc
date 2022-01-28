@@ -21,7 +21,6 @@ BOOST_FIXTURE_TEST_CASE(test_run_stop, Fixture)
 {
     auto tr = thread_runner{"test_runner", []() {}, []() {}};
     BOOST_CHECK(tr.run());
-    tr.shutdown();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

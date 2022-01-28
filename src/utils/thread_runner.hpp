@@ -10,12 +10,13 @@
 #include <functional>
 #include <memory>
 #include <stdexcept>
+#include <stop_token>
 #include <thread>
 
 namespace utils
 {
 
-class thread_runner
+class thread_runner final
 {
    public:
     using runable_t  = std::function<void()>;
@@ -29,18 +30,16 @@ class thread_runner
     thread_runner(thread_runner&& rhs) noexcept = delete;
     auto operator=(thread_runner&& rhs) noexcept -> thread_runner& = delete;
 
-    ~thread_runner();
+    ~thread_runner() = default;
 
     thread_runner(std::string name, runable_t run, runabort_t abort);
 
     auto run() -> bool;
-    auto shutdown() -> void;
 
    private:
-    void run_fn();
+    void run_fn(const std::stop_token& stop_token);
 
-    std::thread      thread;
-    std::atomic_bool running;
+    std::jthread     thread;
     std::string      name;
     runable_t        runable;
     runabort_t       runabort;

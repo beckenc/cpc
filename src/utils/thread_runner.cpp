@@ -17,29 +17,12 @@ thread_runner::thread_runner(std::string name, runable_t run, runabort_t abort) 
 {
 }
 
-thread_runner::~thread_runner()  //
-{
-    shutdown();
-}
-
-void thread_runner::shutdown()
-{
-    running.store(false);
-    if (thread.joinable())
-    {
-        runabort();
-        std::cout << "[" << name << "] Shutdown\n";
-        thread.join();
-    }
-}
-
 auto thread_runner::run() -> bool
 {
     std::cout << "[" << name << "] Starting up\n";
     try
     {
-        running.store(true);
-        thread = std::thread{&thread_runner::run_fn, this};
+        thread = std::jthread{[this](auto&& p) { this->run_fn(std::forward<decltype(p)>(p)); }};
     }
     catch (...)
     {
@@ -50,10 +33,14 @@ auto thread_runner::run() -> bool
     return true;
 }
 
-void thread_runner::run_fn()
+void thread_runner::run_fn(const std::stop_token& stop_token)
 {
     std::cout << "[" << name << "] Running\n";
-    while (running.load())
+
+    // Register a stop callback on the worker thread.
+    std::stop_callback callback(stop_token, runabort);
+
+    while (!stop_token.stop_requested())
     {
         try
         {
@@ -68,5 +55,7 @@ void thread_runner::run_fn()
             std::cerr << "[" << name << "] Something unforseen happened (" << e.what() << ")\n";
         }
     }
+
+    std::cout << "[" << name << "] Shutdown\n";
 }
 }  // namespace utils
